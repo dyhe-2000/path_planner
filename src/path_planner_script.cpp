@@ -46,19 +46,80 @@
 using std::placeholders::_1;
 std::mutex mtx;
 
+// <x, y>
+void bresenham2d(std::pair<std::pair<double, double>, std::pair<double, double>> theData, std::vector<std::pair<int, int>> *theVector) {
+	int y1, x1, y2, x2;
+	int dx, dy, sx, sy;
+	int e2;
+	int error;
+
+	x1 = int(theData.first.first);
+	y1 = int(theData.first.second);
+	x2 = int(theData.second.first);
+	y2 = int(theData.second.second);
+
+	dx = abs(x1 - x2);
+	dy = -abs(y1 - y2);
+
+	sx = x1 < x2 ? 1 : -1;
+	sy = y1 < y2 ? 1 : -1;
+
+	error = dx + dy;
+
+	while (1) {
+		theVector->push_back(std::pair<int, int>(x1, y1));
+		if (x1 == x2 && y1 == y2)
+			break;
+		e2 = 2 * error;
+
+		if (e2 >= dy) {
+			if (x2 == x1) break;
+			error = error + dy;
+			x1 = x1 + sx;
+		}
+		if (e2 <= dx) {
+			if (y2 == y1) break;
+			error = error + dx;
+			y1 = y1 + sy;
+		}
+	}
+}
+
 class path_planner : public rclcpp::Node{
 protected:
+    // publisher
+    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr path_planner_map_pub_;
+
     MsgSubscriber<sensor_msgs::msg::Image>::UniquePtr occupency_grid_map_sub;
     rclcpp::TimerBase::SharedPtr step_timer_;  
     Timer check_duration_timer; 
     double dt_;
 public:
 	explicit path_planner(const rclcpp::NodeOptions & options): Node("path_planner_node", options) {
-        subscribe_from(this, occupency_grid_map_sub, "/slam_map");
+        this->path_planner_map_pub_ = this->create_publisher<sensor_msgs::msg::Image>("Jesus_output", 10);
+
+        subscribe_from(this, occupency_grid_map_sub, "/slam_occupancy_grid_map");
         declare_parameter("dt", 0.065); // step function every 0.065 sec
 	    get_parameter("dt", this->dt_);
         this->step_timer_ = rclcpp::create_timer(this, get_clock(), std::chrono::duration<float>(this->dt_), [this] {step();});
 	}
+
+    void publish_map(cv::Mat& map) { // running repeatedly with the timer set frequency
+		mtx.lock();
+
+		//this->Trajectory_Map; // 8UC3
+		sensor_msgs::msg::Image::UniquePtr map_msg(new sensor_msgs::msg::Image());
+		auto stamp = now();
+		map_msg->header.stamp = stamp;
+		map_msg->height = map.rows;
+		map_msg->width = map.cols;
+		map_msg->encoding = "8UC3";
+		map_msg->is_bigendian = false;
+		map_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(map.step);
+		map_msg->data.assign(map.datastart,map.dataend);
+		path_planner_map_pub_->publish(std::move(map_msg));
+		mtx.unlock();
+    }
 
     void step(){
 		this->check_duration_timer.reset();
@@ -67,6 +128,8 @@ public:
         if(this->occupency_grid_map_sub->has_msg()){ // has a new message buffered
             std::cout << "received the slam map" << std::endl;
             sensor_msgs::msg::Image occupency_map = *(this->occupency_grid_map_sub->take());
+
+            // Jesus you do all sort's of computation here now is just printing each map's grid's value
 
 		    int img_height = occupency_map.height;
 		    int img_width = occupency_map.width;
@@ -87,6 +150,10 @@ public:
                 }
                 std::cout << std::endl;
             }
+
+            // Jesus you stop here and publish back
+
+            this->publish_map(frame);
         }
 
 		mtx.unlock();
