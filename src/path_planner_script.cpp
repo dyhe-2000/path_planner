@@ -105,7 +105,7 @@ public:
 	}
 
     void publish_map(cv::Mat& map) { // running repeatedly with the timer set frequency
-		mtx.lock();
+		std::cout << "start publishing" << std::endl;
 
 		//this->Trajectory_Map; // 8UC3
 		sensor_msgs::msg::Image::UniquePtr map_msg(new sensor_msgs::msg::Image());
@@ -118,7 +118,8 @@ public:
 		map_msg->step = static_cast<sensor_msgs::msg::Image::_step_type>(map.step);
 		map_msg->data.assign(map.datastart,map.dataend);
 		path_planner_map_pub_->publish(std::move(map_msg));
-		mtx.unlock();
+
+		std::cout << "finish publishing" << std::endl;
     }
 
     void step(){
@@ -143,16 +144,143 @@ public:
             uint8_t* original_pixel_ptr = (uint8_t*)frame.data;
             int cn = frame.channels();
             std::cout << "channel count: " << cn << std::endl;
+			std::cout << "pushing image step: " << frame.step << std::endl;
             for(int i = 0; i < frame.rows; i++){
                 for(int j = 0; j < frame.cols; j++){
-                    int num_in_grid = original_pixel_ptr[i*frame.cols*cn + j*cn + 0]; 
-                    std::cout << num_in_grid << " ";
+                    int r = original_pixel_ptr[i*frame.cols*cn + j*cn + 0]; 
+					int g = original_pixel_ptr[i*frame.cols*cn + j*cn + 1]; 
+					int b = original_pixel_ptr[i*frame.cols*cn + j*cn + 2]; 
+                    //std::cout << "r: " << r << " g: " << g << " b: " << b;
                 }
-                std::cout << std::endl;
+                //std::cout << std::endl;
             }
 
-            // Jesus you stop here and publish back
+			// J
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[100*frame.cols*cn + (100+i)*cn + 0] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (100+i)*cn + 1] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (100+i)*cn + 2] = 0; 
+			}
 
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + 150*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + 150*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + 150*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 50; ++i){
+				original_pixel_ptr[200*frame.cols*cn + (100+i)*cn + 0] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (100+i)*cn + 1] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (100+i)*cn + 2] = 0; 
+			}
+
+			// E x: 250 - 350 y: 100 - 200
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[100*frame.cols*cn + (250+i)*cn + 0] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (250+i)*cn + 1] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (250+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[150*frame.cols*cn + (250+i)*cn + 0] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (250+i)*cn + 1] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (250+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[200*frame.cols*cn + (250+i)*cn + 0] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (250+i)*cn + 1] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (250+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + (250)*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (250)*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (250)*cn + 2] = 0; 
+			}
+
+			// S x: 400 - 500 y: 100 - 200
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[100*frame.cols*cn + (400+i)*cn + 0] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (400+i)*cn + 1] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (400+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[150*frame.cols*cn + (400+i)*cn + 0] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (400+i)*cn + 1] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (400+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[200*frame.cols*cn + (400+i)*cn + 0] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (400+i)*cn + 1] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (400+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 50; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + (400)*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (400)*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (400)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 50; ++i){
+				original_pixel_ptr[(150+i)*frame.cols*cn + (500)*cn + 0] = 255; 
+				original_pixel_ptr[(150+i)*frame.cols*cn + (500)*cn + 1] = 255; 
+				original_pixel_ptr[(150+i)*frame.cols*cn + (500)*cn + 2] = 0; 
+			}
+
+			// U x: 550 - 650 y: 100 - 200
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[200*frame.cols*cn + (550+i)*cn + 0] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (550+i)*cn + 1] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (550+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + (550)*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (550)*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (550)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + (650)*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (650)*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (650)*cn + 2] = 0; 
+			}
+
+			// S x: 700 - 800 y: 100 - 200
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[100*frame.cols*cn + (700+i)*cn + 0] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (700+i)*cn + 1] = 255; 
+				original_pixel_ptr[100*frame.cols*cn + (700+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[150*frame.cols*cn + (700+i)*cn + 0] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (700+i)*cn + 1] = 255; 
+				original_pixel_ptr[150*frame.cols*cn + (700+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 100; ++i){
+				original_pixel_ptr[200*frame.cols*cn + (700+i)*cn + 0] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (700+i)*cn + 1] = 255; 
+				original_pixel_ptr[200*frame.cols*cn + (700+i)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 50; ++i){
+				original_pixel_ptr[(100+i)*frame.cols*cn + (700)*cn + 0] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (700)*cn + 1] = 255; 
+				original_pixel_ptr[(100+i)*frame.cols*cn + (700)*cn + 2] = 0; 
+			}
+
+			for(int i = 0; i < 50; ++i){
+				original_pixel_ptr[(150+i)*frame.cols*cn + (800)*cn + 0] = 255; 
+				original_pixel_ptr[(150+i)*frame.cols*cn + (800)*cn + 1] = 255; 
+				original_pixel_ptr[(150+i)*frame.cols*cn + (800)*cn + 2] = 0; 
+			}
+
+            // Jesus you stop here and publish back
             this->publish_map(frame);
         }
 
