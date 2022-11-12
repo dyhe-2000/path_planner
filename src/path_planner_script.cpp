@@ -99,7 +99,7 @@ public:
         this->path_planner_map_pub_ = this->create_publisher<sensor_msgs::msg::Image>("Jesus_output", 10);
 
         subscribe_from(this, occupency_grid_map_sub, "/slam_occupancy_grid_map");
-        declare_parameter("dt", 0.065); // step function every 0.065 sec
+        declare_parameter("dt", 0.1); // step function every 0.065 sec
 	    get_parameter("dt", this->dt_);
         this->step_timer_ = rclcpp::create_timer(this, get_clock(), std::chrono::duration<float>(this->dt_), [this] {step();});
 	}
