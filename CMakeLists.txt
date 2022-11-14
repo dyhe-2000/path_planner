@@ -17,10 +17,11 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(boat_interfaces REQUIRED)
 ament_auto_find_build_dependencies()
 
 ament_auto_add_executable(path_planner_script src/path_planner_script.cpp)
-ament_target_dependencies(path_planner_script rclcpp std_msgs sensor_msgs OpenCV cv_bridge Eigen3 geometry_msgs)
+ament_target_dependencies(path_planner_script rclcpp std_msgs sensor_msgs OpenCV cv_bridge Eigen3 geometry_msgs boat_interfaces)
 
 install(TARGETS
 	path_planner_script

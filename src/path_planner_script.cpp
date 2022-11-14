@@ -6,6 +6,7 @@
 #include <vector>
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
+#include "boat_interfaces/msg/vector_array.hpp"
 #include "std_msgs/msg/bool.hpp"
 #include "opencv2/core/mat.hpp"
 #include "opencv2/core.hpp"
@@ -85,10 +86,38 @@ void bresenham2d(std::pair<std::pair<double, double>, std::pair<double, double>>
 	}
 }
 
+Eigen::MatrixXd calc_worldTbody(Eigen::MatrixXd& x){
+	// x is 3 by 1
+	Eigen::MatrixXd worldTbody(4, 4); //4 by n matrix
+	worldTbody = Eigen::MatrixXd::Zero(4,4);
+	worldTbody(0,0) = 1;
+	worldTbody(1,1) = worldTbody(2,2) = worldTbody(3,3) = worldTbody(0,0);
+	worldTbody(0,0) = cos(x(2,0));
+	worldTbody(0,1) = -sin(x(2,0));
+	worldTbody(1,0) = sin(x(2,0));
+	worldTbody(1,1) = cos(x(2,0));
+	worldTbody(0,3) = x(0,0);
+	worldTbody(1,3) = x(1,0);
+	return worldTbody;
+}
+
+Eigen::MatrixXd calc_T_inv(Eigen::MatrixXd& T){
+    Eigen::MatrixXd T_inv(4, 4); //4 by 4 matrix
+	T_inv = Eigen::MatrixXd::Zero(4,4);
+    Eigen::MatrixXd R = T.block(0, 0, 3, 3);
+    Eigen::MatrixXd p = T.block(0, 3, 3, 1);
+    Eigen::MatrixXd R_T = R.transpose();
+    T_inv(3,3) = 1;
+    T_inv.block(0,0,3,3) = R_T;
+    T_inv.block(0,3,3,1) = -R_T*p;
+    return T_inv;
+}
+
 class path_planner : public rclcpp::Node{
 protected:
     // publisher
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr path_planner_map_pub_;
+	rclcpp::Publisher<boat_interfaces::msg::VectorArray>::SharedPtr map_path_pub_;
 
     MsgSubscriber<sensor_msgs::msg::Image>::UniquePtr occupency_grid_map_sub;
     rclcpp::TimerBase::SharedPtr step_timer_;  
@@ -97,11 +126,36 @@ protected:
 public:
 	explicit path_planner(const rclcpp::NodeOptions & options): Node("path_planner_node", options) {
         this->path_planner_map_pub_ = this->create_publisher<sensor_msgs::msg::Image>("Jesus_output", 10);
+		this->map_path_pub_ = this->create_publisher<boat_interfaces::msg::VectorArray>("map_path", 10);
 
         subscribe_from(this, occupency_grid_map_sub, "/slam_occupancy_grid_map");
         declare_parameter("dt", 0.1); // step function every 0.065 sec
 	    get_parameter("dt", this->dt_);
         this->step_timer_ = rclcpp::create_timer(this, get_clock(), std::chrono::duration<float>(this->dt_), [this] {step();});
+		publish_map_path();
+	}
+
+	void publish_map_path(){
+		int num_angle_pts = 0;
+		std::cout << "enter how many angle points: ";
+		std::cin >> num_angle_pts;
+
+		boat_interfaces::msg::VectorArray path;
+		for(int i = 0; i < num_angle_pts; ++i){
+			std::cout << "pt " << i << " enter x: " << std::endl;
+			int x;
+			std::cin >> x;
+			std::cout << "pt " << i << " enter y: " << std::endl;
+			int y;
+			std::cin >> y;
+    		geometry_msgs::msg::Vector3 theVec;
+    		theVec.x = x;
+    		theVec.y = y;
+    		theVec.z = 0;
+    		path.vec3list.push_back(theVec);
+		}
+		map_path_pub_->publish(path);
+		this->publish_map_path();
 	}
 
     void publish_map(cv::Mat& map) { // running repeatedly with the timer set frequency
@@ -292,6 +346,20 @@ public:
 
 int main(int argc, char** argv){
     std::cout << "this is path planner node" << std::endl;
+
+	/*
+	boat_interfaces::msg::VectorArray path;
+    geometry_msgs::msg::Vector3 theVec;
+    theVec.x = 0;
+    theVec.y = 1;
+    theVec.z = 2;
+    path.vec3list.push_back(theVec);
+    std::cout << path.vec3list.size() << std::endl;
+    for(int i = 0; i < path.vec3list.size(); ++i){
+        std::cout << path.vec3list[i].x << " " << path.vec3list[i].y << " " << path.vec3list[i].z << std::endl;
+    }
+	*/
+
     rclcpp::init(argc, argv);
 	rclcpp::NodeOptions options{};
 	auto node = std::make_shared<path_planner>(options);
